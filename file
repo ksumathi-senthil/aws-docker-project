@@ -1,0 +1,572 @@
+i
+AWS EC2 TO GITHUB USING GIT AND SSH
+
+Repository:
+https://github.com/ksumathi-senthil/aws-docker-project
+
+OBJECTIVE
+
+Connect an AWS EC2 Linux server to GitHub using Git and SSH.
+
+The workflow is:
+
+AWS EC2
+|
+| Git + SSH
+v
+GitHub Repository
+|
+v
+aws-docker-project
+
+CHECK CURRENT LOCATION
+
+Check current user:
+
+whoami
+
+Check current directory:
+
+pwd
+
+List files:
+
+ls -ltra
+
+Example:
+
+/root
+README.md
+Docker
+yes
+yes.pub
+.ssh/
+
+IMPORTANT:
+Do NOT push the entire /root directory to GitHub.
+
+Files such as "yes" may be private SSH keys.
+
+CREATE PROJECT DIRECTORY
+
+Create a dedicated project directory:
+
+mkdir -p /root/aws-docker-project
+
+Go into the project:
+
+cd /root/aws-docker-project
+
+Check:
+
+pwd
+
+Expected:
+
+/root/aws-docker-project
+
+COPY PROJECT FILES
+
+Copy only files that belong to the project.
+
+Example:
+
+cp /root/README.md /root/aws-docker-project/
+cp /root/Docker /root/aws-docker-project/
+
+Check:
+
+ls -la
+
+INITIALIZE GIT
+
+Inside the project directory:
+
+cd /root/aws-docker-project
+
+Initialize Git:
+
+git init
+
+This creates:
+
+.git
+
+Verify:
+
+ls -la
+
+CONFIGURE GIT USER
+
+Set Git username:
+
+git config --global user.name "ksumathi-senthil"
+
+Set GitHub email:
+
+git config --global user.email "YOUR_GITHUB_EMAIL"
+
+Check configuration:
+
+git config --global --list
+
+CREATE .gitignore
+
+Create the file:
+
+nano .gitignore
+
+Add:
+
+SSH private keys
+
+*.pem
+*_ed25519
+*_rsa
+id_rsa
+id_ed25519
+
+Environment files
+
+.env
+.env.*
+
+Logs
+
+*.log
+
+OS files
+
+.DS_Store
+
+Save the file.
+
+CHECK FILES BEFORE ADDING
+
+Run:
+
+git status
+
+Make sure only project files are being added.
+
+DO NOT add:
+
+Private SSH keys
+Passwords
+API keys
+AWS credentials
+.env files
+.pem files
+
+ADD FILES TO GIT
+
+Run:
+
+git add .
+
+Check:
+
+git status
+
+CREATE INITIAL COMMIT
+
+Run:
+
+git commit -m "Initial commit"
+
+CHANGE BRANCH TO MAIN
+
+Run:
+
+git branch -M main
+
+Check:
+
+git branch
+
+Expected:
+
+main
+CREATE SSH KEY FOR GITHUB
+
+Create an ED25519 SSH key:
+
+ssh-keygen -t ed25519 -C "YOUR_GITHUB_EMAIL" -f /root/github_ed25519
+
+This creates:
+
+/root/github_ed25519
+/root/github_ed25519.pub
+
+IMPORTANT:
+
+github_ed25519
+= PRIVATE KEY
+
+github_ed25519.pub
+= PUBLIC KEY
+
+NEVER SHARE:
+
+/root/github_ed25519
+
+The private key must remain secret.
+
+DISPLAY PUBLIC KEY
+
+Run:
+
+cat /root/github_ed25519.pub
+
+Copy the entire output.
+
+It will look similar to:
+
+ssh-ed25519 AAAAC3... YOUR_GITHUB_EMAIL
+
+ADD SSH KEY TO GITHUB
+
+Log in to GitHub as:
+
+ksumathi-senthil
+
+Go to:
+
+GitHub
+-> Settings
+-> SSH and GPG keys
+-> New SSH key
+
+Title:
+
+AWS EC2
+
+Key type:
+
+Authentication Key
+
+Paste the complete contents of:
+
+/root/github_ed25519.pub
+
+Click:
+
+Add SSH key
+
+CONFIGURE SSH
+
+Create SSH configuration:
+
+nano /root/.ssh/config
+
+Add:
+
+Host github.com
+HostName github.com
+User git
+IdentityFile /root/github_ed25519
+IdentitiesOnly yes
+
+Save the file.
+
+SET SSH FILE PERMISSIONS
+
+Run:
+
+chmod 600 /root/.ssh/config
+
+chmod 600 /root/github_ed25519
+
+chmod 644 /root/github_ed25519.pub
+
+TEST GITHUB SSH AUTHENTICATION
+
+Run:
+
+ssh -T git@github.com
+
+Successful output:
+
+Hi ksumathi-senthil! You've successfully authenticated, but GitHub does not provide shell access.
+
+This is NORMAL.
+
+It means SSH authentication is working.
+
+CONFIGURE GITHUB REMOTE
+
+Go to the project:
+
+cd /root/aws-docker-project
+
+Add GitHub remote:
+
+git remote add origin git@github.com:ksumathi-senthil/aws-docker-project.git
+
+Check:
+
+git remote -v
+
+Expected:
+
+origin git@github.com:ksumathi-senthil/aws-docker-project.git (fetch)
+origin git@github.com:ksumathi-senthil/aws-docker-project.git (push)
+
+IF ORIGIN ALREADY EXISTS
+
+If you see:
+
+error: remote origin already exists.
+
+Check:
+
+git remote -v
+
+If the URL is incorrect:
+
+git remote set-url origin git@github.com:ksumathi-senthil/aws-docker-project.git
+
+Check again:
+
+git remote -v
+
+PUSH PROJECT TO GITHUB
+
+Run:
+
+cd /root/aws-docker-project
+
+git push -u origin main
+
+Successful output should contain something similar to:
+
+main -> main
+
+After the first successful push, future pushes can normally use:
+
+git push
+
+NORMAL DAILY GIT WORKFLOW
+
+Every time you make project changes:
+
+cd /root/aws-docker-project
+
+Check changes:
+
+git status
+
+Add changes:
+
+git add .
+
+Commit:
+
+git commit -m "Update project"
+
+Push:
+
+git push
+
+COMMON ERROR: NOT A GIT REPOSITORY
+
+Error:
+
+fatal: not a git repository (or any of the parent directories): .git
+
+Cause:
+
+You are not inside a Git repository.
+
+Solution:
+
+cd /root/aws-docker-project
+
+Then:
+
+git status
+
+If Git has not been initialized:
+
+git init
+
+COMMON ERROR: REMOTE ORIGIN ALREADY EXISTS
+
+Error:
+
+error: remote origin already exists.
+
+Solution:
+
+Check:
+
+git remote -v
+
+Change URL:
+
+git remote set-url origin git@github.com:ksumathi-senthil/aws-docker-project.git
+
+COMMON ERROR: HTTPS 403
+
+Error:
+
+remote: Permission to ... denied
+fatal: unable to access ... 403
+
+Cause:
+
+GitHub does not accept a normal GitHub password for Git HTTPS authentication.
+
+Recommended solution:
+
+Use SSH.
+
+Set SSH remote:
+
+git remote set-url origin git@github.com:ksumathi-senthil/aws-docker-project.git
+
+COMMON ERROR: PERMISSION DENIED PUBLICKEY
+
+Error:
+
+git@github.com: Permission denied (publickey).
+
+Cause:
+
+GitHub cannot authenticate the EC2 SSH key.
+
+Check:
+
+ssh -T git@github.com
+
+Test the specific key:
+
+ssh -i /root/github_ed25519 -o IdentitiesOnly=yes -T git@github.com
+
+Check the key exists:
+
+ls -l /root/github_ed25519*
+
+SSH KEY SECURITY
+
+PRIVATE KEY:
+
+/root/github_ed25519
+
+KEEP THIS SECRET.
+
+PUBLIC KEY:
+
+/root/github_ed25519.pub
+
+This can be added to GitHub.
+
+NEVER COMMIT:
+
+Private SSH keys
+AWS access keys
+AWS secret keys
+Passwords
+API keys
+.env files
+.pem files
+Database credentials
+
+FINAL VERIFICATION
+
+Go to project:
+
+cd /root/aws-docker-project
+
+Check status:
+
+git status
+
+Check branch:
+
+git branch
+
+Check remote:
+
+git remote -v
+
+Test SSH:
+
+ssh -T git@github.com
+
+Push:
+
+git push
+
+EXPECTED SSH RESULT:
+
+Hi ksumathi-senthil! You've successfully authenticated, but GitHub does not provide shell access.
+
+EXPECTED GIT REMOTE:
+
+origin git@github.com:ksumathi-senthil/aws-docker-project.git (fetch)
+origin git@github.com:ksumathi-senthil/aws-docker-project.git (push)
+
+EXPECTED BRANCH:
+
+main
+COMPLETE COMMAND SUMMARY
+
+mkdir -p /root/aws-docker-project
+
+cd /root/aws-docker-project
+
+git init
+
+git config --global user.name "ksumathi-senthil"
+
+git config --global user.email "YOUR_GITHUB_EMAIL"
+
+nano .gitignore
+
+git status
+
+git add .
+
+git commit -m "Initial commit"
+
+git branch -M main
+
+ssh-keygen -t ed25519 -C "YOUR_GITHUB_EMAIL" -f /root/github_ed25519
+
+cat /root/github_ed25519.pub
+
+nano /root/.ssh/config
+
+chmod 600 /root/.ssh/config
+
+chmod 600 /root/github_ed25519
+
+chmod 644 /root/github_ed25519.pub
+
+ssh -T git@github.com
+
+git remote add origin git@github.com:ksumathi-senthil/aws-docker-project.git
+
+git remote -v
+
+git push -u origin main
+
+DAILY COMMANDS AFTER SETUP
+
+cd /root/aws-docker-project
+
+git status
+
+git add .
+
+git commit -m "Update project"
+
+git push
+
+END OF DOCUMENT
+
+AWS EC2 -> Git -> SSH -> GitHub
+Repository: aws-docker-project
+GitHub User: ksumathi-senthil
+Branch: main
