@@ -1,0 +1,4 @@
+.git
+aws-github-session.txt
+*.pem
+.env
